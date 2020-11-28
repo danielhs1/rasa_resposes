@@ -40,8 +40,8 @@ class UtteranceResponse(BaseModel):
 
 class UtteranceModel(BaseModel):
     template: str
-    channel: str
-    texts: List[str]
+    channel: Optional[str]
+    texts: Optional[List[str]]
     buttons: Optional[List[str]]
     image: Optional[str]
     elements: Optional[List[str]]

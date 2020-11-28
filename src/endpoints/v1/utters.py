@@ -4,7 +4,9 @@ from fastapi import APIRouter, status, Request
 
 from src.schemas.utterance import UtteranceModel, UtteranceResponse, UtteranceCreatedModel
 
-from src.repositories.utter import save
+from src.repositories.utter import save, bulk_save
+
+import yaml
 
 router = APIRouter()
 
@@ -18,6 +20,21 @@ router = APIRouter()
 )
 async def create(utter: UtteranceModel, request: Request):
     return await save(utter)
+
+
+@router.post(
+    "/v1/utters/batch",
+    tags=["utters"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Este endpoint recebe um texto no formato yaml do domain rasa e salva as utters que encontrar no campo response"
+)
+async def create(request: Request):
+    rasa_domain = yaml.safe_load(await request.body())
+
+    responses = rasa_domain.get("responses")
+    if responses:
+        await bulk_save(responses)
+    return None
 
 
 def load_utter_response(utter_response: dict) -> UtteranceResponse:

@@ -5,4 +5,6 @@ def get_defaults(db_table):
             value = column.default.arg
             if callable(value):
                 defaults[column.name] = value(column.name)
+            else:
+                defaults[column.name] = value
     return defaults

@@ -18,7 +18,7 @@ utters = sqlalchemy.Table(
         default=uuid4
     ),
     sqlalchemy.Column("template", sqlalchemy.String, nullable=False),
-    sqlalchemy.Column("channel", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("channel", sqlalchemy.String, nullable=False, default="any"),
     sqlalchemy.Column("responses", sqlalchemy.Text, nullable=True),
     sqlalchemy.Column("created_at", sqlalchemy.DateTime, default=datetime.utcnow),
     sqlalchemy.Column(
