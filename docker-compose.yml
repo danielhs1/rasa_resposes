@@ -1,0 +1,94 @@
+version: '3.7'
+
+services:
+  app:
+    container_name: app
+    build: .
+    ports:
+      - "8080:80"
+    env_file:
+      .env.example-dev
+    networks:
+      - default
+
+  elasticsearch:
+    container_name: elasticsearch
+    restart: always
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.type=single-node
+    expose:
+      - 9200
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      - default
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.9.3
+    restart: always
+    expose:
+      - 5601
+    ports:
+      - 5601:5601
+    links:
+      - elasticsearch
+    depends_on:
+      - elasticsearch
+    networks:
+      - default
+
+  apm:
+    hostname: apm
+    container_name: apm
+    restart: always
+    expose:
+      - 8200
+    image: docker.elastic.co/apm/apm-server:7.9.3
+    ports:
+      - 8200:8200
+    links:
+      - elasticsearch
+      - kibana
+    depends_on:
+      - elasticsearch
+      - kibana
+    networks:
+      - default
+
+  redis:
+    container_name: redis
+    image: redis
+    expose:
+      - 6379
+    ports:
+      - "6379:6379"
+    networks:
+      - default
+    restart: always
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgreSQL
+    restart: always
+    environment:
+      POSTGRES_ROOT_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - default
+
+volumes:
+  dbdata:
+
+networks:
+  default:
+    driver: bridge

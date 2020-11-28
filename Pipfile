@@ -1,0 +1,23 @@
+[dev-packages]
+pytest = "*"
+mock = "*"
+responses = "*"
+pytest-dotenv = "*"
+coverage = "*"
+gitchangelog = "*"
+
+[packages]
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = ">=0.12.0"}
+httpx = "*"
+ujson = "*"
+elastic-apm = "*"
+gunicorn = "*"
+python-decouple = "*"
+databases = {extras = ["postgresql"], version = "*"}
+alembic = "*"
+psycopg2-binary= "*"
+aiocache = {extras = ["redis"], version = "*"}
+
+[requires]
+python_version = "3.8"
