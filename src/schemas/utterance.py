@@ -31,17 +31,17 @@ class UtterancePredict(BaseModel):
 
 class UtteranceResponse(BaseModel):
     text: Optional[str]
-    buttons: Optional[str]
+    buttons: Optional[List]
     image: Optional[str]
-    elements: Optional[str]
-    attachments: Optional[str]
+    elements: Optional[List]
+    attachments: Optional[List]
     custom: Optional[dict]
 
 
 class UtteranceModel(BaseModel):
     template: str
     channel: Optional[str]
-    texts: Optional[List[str]]
+    text: Optional[List[str]]
     buttons: Optional[List[str]]
     image: Optional[str]
     elements: Optional[List[str]]
@@ -50,11 +50,11 @@ class UtteranceModel(BaseModel):
 
 
 class UtteranceResponses(BaseModel):
-    texts: Optional[List[str]]
-    buttons: Optional[List[str]]
+    text: Optional[str]
+    buttons: Optional[List]
     image: Optional[str]
-    elements: Optional[List[str]]
-    attachments: Optional[List[str]]
+    elements: Optional[List]
+    attachments: Optional[List]
     custom: Optional[dict]
 
 

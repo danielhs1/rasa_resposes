@@ -1,12 +1,10 @@
 import random
 
+import yaml
 from fastapi import APIRouter, status, Request
 
-from src.schemas.utterance import UtteranceModel, UtteranceResponse, UtteranceCreatedModel
-
-from src.repositories.utter import save, bulk_save
-
-import yaml
+from src.repositories.utter import save, bulk_save, get_utters
+from src.schemas.utterance import UtteranceModel, UtteranceResponse, UtteranceCreatedModel, UtterancePredict
 
 router = APIRouter()
 
@@ -18,7 +16,7 @@ router = APIRouter()
     summary="Endpoint responsável por criar uma nova utter",
     response_model=UtteranceCreatedModel
 )
-async def create(utter: UtteranceModel, request: Request):
+async def create(utter: UtteranceModel):
     return await save(utter)
 
 
@@ -35,6 +33,20 @@ async def create(request: Request):
     if responses:
         await bulk_save(responses)
     return None
+
+
+@router.post(
+    "/v1/utters/response",
+    tags=["utters"],
+    status_code=status.HTTP_200_OK,
+    summary="Endpoint por devolver a resposta de acordo com a utter passada",
+    response_model=UtteranceResponse
+)
+async def get(utterance: UtterancePredict):
+    """
+    Este endpoint recebe as requests do Rasa para definir a resposta correta
+    """
+    return await get_utters(utterance)
 
 
 def load_utter_response(utter_response: dict) -> UtteranceResponse:

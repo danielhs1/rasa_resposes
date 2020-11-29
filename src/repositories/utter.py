@@ -1,11 +1,13 @@
+import random
 from itertools import islice
 
 import ujson
+from sqlalchemy import or_, and_
 
 from src.database.connection import database
 from src.database.models.utters import utters
 from src.database.utils import get_defaults
-from src.schemas.utterance import UtteranceModel, UtteranceCreatedModel
+from src.schemas.utterance import UtteranceModel, UtteranceCreatedModel, UtterancePredict, UtteranceResponses
 
 
 async def save(utter: UtteranceModel) -> UtteranceCreatedModel:
@@ -14,34 +16,34 @@ async def save(utter: UtteranceModel) -> UtteranceCreatedModel:
     defaults["template"] = utter.template
     defaults["channel"] = utter.channel if utter.channel else defaults["channel"]
     defaults["responses"] = ujson.dumps({
-        "texts": utter.texts,
+        "text": utter.text,
         "buttons": utter.buttons,
         "image": utter.image,
         "elements": utter.elements,
         "attachments": utter.attachments,
-        "custom": utter.attachments
+        "custom": utter.custom
     })
     stmt = utters.insert().values(defaults)
     await database.execute(stmt)
-    return prepare_created_utterance(defaults)
+    return _prepare_created_utterance(defaults)
 
 
 async def bulk_save(yaml_responses: dict) -> bool:
-    for item in chunks(yaml_responses):
+    for item in _chunks(yaml_responses):
         bulk_list = []
         for utter_name, values in item.items():
             defaults = get_defaults(utters)
             defaults["template"] = utter_name
 
-            texts = []
+            text = []
             buttons = []
             image = None
             elements = []
             attachments = []
-            custom = []
+            custom = {}
             for sub in values:
                 if sub.get('text'):
-                    texts.append(sub.get('text'))
+                    text.append(sub.get('text'))
                 if sub.get('buttons'):
                     buttons.append(sub.get('buttons'))
                 if sub.get('image'):
@@ -51,10 +53,10 @@ async def bulk_save(yaml_responses: dict) -> bool:
                 if sub.get('attachments'):
                     attachments.append(sub.get('attachments'))
                 if sub.get('custom'):
-                    custom.append(sub.get('custom'))
+                    custom = sub.get('custom')
 
             defaults["responses"] = ujson.dumps({
-                "texts": texts,
+                "text": text,
                 "buttons": buttons,
                 "image": image,
                 "elements": elements,
@@ -70,7 +72,18 @@ async def bulk_save(yaml_responses: dict) -> bool:
     return True
 
 
-def prepare_created_utterance(utterance_dict) -> UtteranceCreatedModel:
+async def get_utters(utter: UtterancePredict):
+    query = utters.select().where(and_(
+        utters.c.template == utter.template,
+        or_(utters.c.channel == utter.channel.name, utters.c.channel == "any")
+    ))
+    response = await database.fetch_all(query)
+
+    result = _prepare_get_response(response)
+    return result
+
+
+def _prepare_created_utterance(utterance_dict) -> UtteranceCreatedModel:
     utterance_dict["id"] = str(utterance_dict["id"])
     utterance_dict["created_at"] = utterance_dict["created_at"].isoformat()
     utterance_dict["updated_at"] = utterance_dict["updated_at"].isoformat()
@@ -78,19 +91,32 @@ def prepare_created_utterance(utterance_dict) -> UtteranceCreatedModel:
     return UtteranceCreatedModel(**utterance_dict)
 
 
-def chunks(data, size=100):
+def _chunks(data, size=100):
     it = iter(data)
     for i in range(0, len(data), size):
         yield {k:data[k] for k in islice(it, size)}
 
 
-def update():
-    pass
+def _prepare_get_response(response):
+    data = {
+        "text": [],
+        "buttons": [],
+        "image": None,
+        "elements": [],
+        "attachments": [],
+        "custom": {}
+    }
+    for item in response:
+        responses = ujson.loads(item.get("responses"))
+        for key, value in responses.items():
+            if key in ["image", "custom"]:
+                data[key] = value
+            else:
+                data[key] += value
 
+    if len(data["text"]) == 0:
+        data["text"] = None
+    else:
+        data["text"] = random.choice(data["text"])
 
-def get():
-    pass
-
-
-def delete():
-    pass
+    return UtteranceResponses(**data)
