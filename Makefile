@@ -7,10 +7,10 @@ git-release:
 	git add ${SRC_DIR}/__init__.py
 	git commit -m "New version `cat ${SRC_DIR}/__init__.py | awk -F '\"' '{print($$2)}' | awk -F . '{OFS=\".\";print($$1,$$2,$$3)}'`"
 	INPUT_VERSION=`cat ${SRC_DIR}/__init__.py | awk -F '\"' '{print($$2)}'` \
+	&& git tag "$$INPUT_VERSION" \
 	&& echo "`gitchangelog`" > ./CHANGELOG.rst \
 	&& git add ./CHANGELOG.rst \
 	&& git commit -m "Changelog updated" \
-	&& git tag "$$INPUT_VERSION" \
 	&& git push origin "$$INPUT_VERSION" \
 	&& git push origin -u "$(shell git rev-parse --abbrev-ref HEAD)"
 
